@@ -184,7 +184,7 @@ def data_analysis():
     # 添加文本输入框，让用户输入URL
     url = st.text_input("输入网址", "https://www.gov.cn/xinwen/2022-10/25/content_5721685.htm")
     # 添加下拉框，让用户选择图表类型
-    chart_type = st.sidebar.selectbox("Select Chart Type", ["折线图", "饼图", "柱状图", "散点图", "直方图", "区域图", "热力图"])
+    chart_type = st.sidebar.selectbox("Select Chart Type", ["折线图", "饼图", "柱状图", "散点图","面积图","雷达图","漏斗图"])
     keywords=del_key_web_word(url)
     # 创建一个多选下拉菜单
     keys_list = list(keywords.keys())
