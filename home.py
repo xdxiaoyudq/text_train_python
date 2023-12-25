@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from pyecharts import options as opts
 from pyecharts.charts import WordCloud
-plt.rcParams["font.sans-serif"]=["SimHei"] #设置字体
+plt.rcParams["font.sans-serif"]=["INFROMAN"] #设置字体
 plt.rcParams["axes.unicode_minus"]=False #该语句解决图像中的“-”负号的乱码问题
 
 def getdata_base_text(url):
