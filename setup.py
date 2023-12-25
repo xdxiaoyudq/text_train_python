@@ -13,6 +13,7 @@ setup(
         'Requests',
         'gopup',
         'setuptools'
+        'streamlit_echarts'
         'beautifulsoup4',
         'plotly',
         'jieba',
