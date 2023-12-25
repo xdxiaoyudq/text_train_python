@@ -197,7 +197,7 @@ def data_analysis():
     # 添加按钮，点击后进行统计和绘图
     if st.button("分析"):
         if not dict_end:
-            dict =ut_get_first_n_indict(keywords, 8)
+            dict_end =ut_get_first_n_indict(keywords, 8)
         tb_generate(chart_type,dict_end)
 
 def pa_sidebar(wide=None,hige=None):
