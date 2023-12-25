@@ -23,6 +23,21 @@ def getdata_base_text(url):
     text = soup.get_text()
     return text
 
+def read_txt_file(file_path):
+    with open(file_path, 'r') as file:
+        text = file.read()
+    return text
+
+def download_dict_as_txt_file(data_dict, file_name):
+    with open(file_name, 'w') as file:
+        for key, value in data_dict.items():
+            file.write(f"{key}: {value}\n")
+    st.download_button(
+        label="下载数据",
+        data=open(file_name, 'rb').read(),
+        file_name=file_name,
+        mime="text/plain"
+    )
 def ut_get_first_n_indict(dct, n):
     # 获取字典中前n个键值对
     first_n_elements = {key: dct[key] for key in list(dct)[:n]}
@@ -66,6 +81,7 @@ def del_key_web_word(url):
 def del_key_self_word(url):
     '''
     :param url: 用户输入的地址
+    :param st: streamlit对象st
     :return:
     '''
     #返回的字典
@@ -122,8 +138,11 @@ def tb_generate(chart_type, keyword_counts):
                 toolbox_opts=opts.ToolboxOpts(),)
         st_pyecharts(scatter_chart)
     elif chart_type == "面积图":
+        # 创建一个 Line 图表对象，使用init_opts参数初始化图表，设置其主题为LIGHT-明亮
         mianji_chart = Line(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))
+        # 添加X轴数据
         mianji_chart.add_xaxis(list(keyword_counts.keys()))
+        # 使用list(word_count.values())作为Y轴的数据点，数据线是平滑的，不是折线，在折线下方填充颜色以创建面积图，并设置填充的不透明度为0.5
         mianji_chart.add_yaxis("Counts", list(keyword_counts.values()), is_smooth=True,
                                areastyle_opts=opts.AreaStyleOpts(opacity=0.5))
         mianji_chart.set_global_opts(title_opts=opts.TitleOpts(title="面积图"))
@@ -141,14 +160,11 @@ def tb_generate(chart_type, keyword_counts):
         funnel_chart.set_global_opts(title_opts=opts.TitleOpts(title=""), toolbox_opts=opts.ToolboxOpts(),)
         st_pyecharts(funnel_chart)
 
-
 # 绘制词云
 def plot_word_cloud(word_count, shape='circle'):
-    wordcloud = (
-        WordCloud()
-        .add("", word_count.most_common(20), word_size_range=[30, 100], shape=shape)
-        .set_global_opts(title_opts=opts.TitleOpts(title="词云"))
-    )
+    wordcloud=WordCloud()
+    wordcloud.add("", word_count.most_common(20), word_size_range=[30, 100], shape=shape)
+    wordcloud.set_global_opts(title_opts=opts.TitleOpts(title="词云"))
     return wordcloud
 
 #横拉框
@@ -169,6 +185,8 @@ def ciyun():
     clear_text=remove_html_punctuation(text)
     word_count=tokenize_and_count(clear_text)
     clear_number_text=horizon_pull_frame(word_count)
+    if st.button("下载数据"):
+        download_dict_as_txt_file(clear_number_text, "data.txt")
     # 绘制词云
     word_cloud = plot_word_cloud(clear_number_text, shape=selected_shape)
     # 保存词云为 HTML 文件
@@ -199,19 +217,48 @@ def data_analysis():
     if st.button("分析"):
         if not dict_end:
             dict_end =ut_get_first_n_indict(keywords, 8)
-        tb_generate(chart_type,dict_end)
+    if st.button("下载数据"):
+        download_dict_as_txt_file(dict_end, "data.txt")
+    tb_generate(chart_type,dict_end)
+
+
+def get_text_self():
+    st.title("读取本地txt文件")
+    # 显示文件上传部件
+    uploaded_file = st.sidebar.file_uploader("选择要上传的txt文件", type="txt")
+    chart_type = st.sidebar.selectbox("Select Chart Type", ["折线图", "饼图", "柱状图", "散点图", "面积图", "雷达图", "漏斗图"])
+    if uploaded_file is not None:
+        # 读取上传的文件
+        file_contents = uploaded_file.read().decode('utf-8')
+    else:
+        file_contents=""
+    clead_text=remove_html_punctuation(file_contents)
+    text=tokenize_and_count(clead_text)
+    if st.button("下载数据"):
+        download_dict_as_txt_file(text, "data.txt")
+    # 绘制词云
+    word_cloud = plot_word_cloud(text)
+    # 保存词云为 HTML 文件
+    html_file = "word_cloud.html"
+    word_cloud.render(html_file)
+    # 在Streamlit中显示词云
+    st.components.v1.html(open(html_file, 'r').read(), height=500, width=900, scrolling=True)
+    tb_generate(chart_type, text)
+
 
 def pa_sidebar(wide=None,hige=None):
     #侧边栏标题
     st.sidebar.title("数据")
     #侧边栏选项
-    list_baidu_project=["词云","数据图表"]
+    list_baidu_project=["词云","数据图表","本地数据分析"]
     selected_option = st.sidebar.selectbox("",list_baidu_project)
     # 根据侧边栏选择显示不同的内容
     if selected_option == "词云":
         ciyun()
     elif selected_option == "数据图表":
         data_analysis()
+    elif selected_option=="本地数据分析":
+        get_text_self()
 
 # 运行主函数
 if __name__ == '__main__':
