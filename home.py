@@ -6,12 +6,11 @@ from bs4 import BeautifulSoup
 import re
 from collections import Counter
 import jieba
-import matplotlib.pyplot as plt
 import streamlit as st
+from pyecharts.charts import WordCloud, Funnel, Radar, Bar, Line, Pie, Scatter
+from pyecharts.globals import ThemeType
+from streamlit_echarts import st_pyecharts
 from pyecharts import options as opts
-from pyecharts.charts import WordCloud
-plt.rcParams["font.sans-serif"]=["INFROMAN"] #设置字体
-plt.rcParams["axes.unicode_minus"]=False #该语句解决图像中的“-”负号的乱码问题
 
 def getdata_base_text(url):
     """
@@ -86,60 +85,63 @@ def del_key_self_word(url):
         item_counts[item] = text.lower().count(item.lower())
     return item_counts
 
-def tb_generate(chart_type,keyword_counts):
-    '''
-    :param chart_type: 生成的图表类型
-    :param keyword_counts: 需要展示的数据。类型为字典
-    :return: 返回fig和ax对象
-    '''
-    fig, ax = plt.subplots()
+def tb_generate(chart_type, keyword_counts):
     if chart_type == "折线图":
-        plt.plot(keyword_counts.keys(), keyword_counts.values())
-        plt.xlabel("关键字")
-        plt.ylabel("数量")
-        plt.xticks(rotation='vertical')
-        plt.title("Tag Text Count Line Chart")
-        st.pyplot(fig)
+        line_chart=Line()
+        line_chart.add_xaxis(list(keyword_counts.keys()))
+        line_chart.add_yaxis("", list(keyword_counts.values()))
+        line_chart.set_global_opts(
+            xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-90)),
+            title_opts=opts.TitleOpts(title=""),
+            visualmap_opts=opts.VisualMapOpts(max_=150),
+            toolbox_opts=opts.ToolboxOpts(),)
+        st_pyecharts(line_chart)
     elif chart_type == "饼图":
-        plt.pie(keyword_counts.values(), labels=keyword_counts.keys(), autopct='%1.1f%%')
-        plt.title("Tag Text Count Pie Chart")
-        st.pyplot(fig)
+        pie_chart=Pie()
+        pie_chart.add("", [list(z) for z in zip(keyword_counts.keys(), keyword_counts.values())])
+        pie_chart.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
+        pie_chart.set_global_opts(title_opts=opts.TitleOpts(title=""), toolbox_opts=opts.ToolboxOpts(),visualmap_opts=opts.VisualMapOpts(max_=150),)
+        st_pyecharts(pie_chart)
     elif chart_type == "柱状图":
-        plt.bar(keyword_counts.keys(), keyword_counts.values())
-        plt.xlabel("关键字")
-        plt.ylabel("数量")
-        plt.xticks(rotation='vertical')
-        plt.title("Tag Text Count Bar Chart")
-        st.pyplot(fig)
-    elif chart_type =="散点图":
-        plt.scatter(keyword_counts.keys(), keyword_counts.values())
-        plt.xlabel("关键字")
-        plt.ylabel("数量")
-        plt.xticks(rotation='vertical')
-        plt.title("Tag Text Count Bar Chart")
-        st.pyplot(fig)
-    elif chart_type=="直方图":
-        plt.hist(keyword_counts.values(), bins=range(0, max(keyword_counts.values()) + 10, 10))
-        plt.xlabel("数量")
-        plt.ylabel("频数")
-        plt.xticks(range(0, max(keyword_counts.values()) + 10, 10))
-        plt.title("Tag Text Count Histogram")
-        st.pyplot(fig)
-    elif chart_type=="区域图":
-        plt.stackplot(keyword_counts.keys(), keyword_counts.values())
-        plt.xlabel("关键字")
-        plt.ylabel("数量")
-        plt.xticks(rotation="vertical")
-        plt.title("Tag Text Count Area Chart")
-        st.pyplot(fig)
-    elif chart_type=="热力图":
-        heatmap = ax.pcolor([list(keyword_counts.values())], cmap=plt.cm.Blues)
-        plt.colorbar(heatmap)
-        plt.xticks(rotation='vertical')
-        ax.set_xticks(range(len(keyword_counts.keys())))
-        ax.set_xticklabels(keyword_counts.keys())
-        plt.title("Tag Text Count Heatmap")
-        st.pyplot(fig)
+        bar_chart=Bar()
+        bar_chart.add_xaxis(list(keyword_counts.keys()))
+        bar_chart.add_yaxis("", list(keyword_counts.values()))
+        bar_chart.set_global_opts(
+                xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-90)),
+                title_opts=opts.TitleOpts(title=""),
+                visualmap_opts=opts.VisualMapOpts(max_=150),
+                toolbox_opts=opts.ToolboxOpts(),)
+        st_pyecharts(bar_chart)
+    elif chart_type == "散点图":
+        scatter_chart=Scatter()
+        scatter_chart.add_xaxis(list(keyword_counts.keys()))
+        scatter_chart.add_yaxis("", list(keyword_counts.values()))
+        scatter_chart.set_global_opts(
+                xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-90)),
+                title_opts=opts.TitleOpts(title=""),
+                visualmap_opts=opts.VisualMapOpts(max_=150),
+                toolbox_opts=opts.ToolboxOpts(),)
+        st_pyecharts(scatter_chart)
+    elif chart_type == "面积图":
+        mianji_chart = Line(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))
+        mianji_chart.add_xaxis(list(keyword_counts.keys()))
+        mianji_chart.add_yaxis("Counts", list(keyword_counts.values()), is_smooth=True,
+                               areastyle_opts=opts.AreaStyleOpts(opacity=0.5))
+        mianji_chart.set_global_opts(title_opts=opts.TitleOpts(title="面积图"))
+        st_pyecharts(mianji_chart)
+    elif chart_type == "雷达图":
+        radar_chart = Radar()
+        radar_chart.add_schema(schema=[opts.RadarIndicatorItem(name=key, max_=150) for key in keyword_counts.keys()])
+        radar_chart.add("", [list(keyword_counts.values())], color="blue")
+        radar_chart.set_global_opts(title_opts=opts.TitleOpts(title="Radar Chart"), toolbox_opts=opts.ToolboxOpts())
+        st_pyecharts(radar_chart)
+    elif chart_type == "漏斗图":
+        funnel_chart = Funnel()
+        funnel_chart.add("", [list(z) for z in zip(keyword_counts.keys(), keyword_counts.values())])
+        funnel_chart.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
+        funnel_chart.set_global_opts(title_opts=opts.TitleOpts(title=""), toolbox_opts=opts.ToolboxOpts(),)
+        st_pyecharts(funnel_chart)
+
 
 # 绘制词云
 def plot_word_cloud(word_count, shape='circle'):
