@@ -66,7 +66,6 @@ def del_key_web_word(url):
 def del_key_self_word(url):
     '''
     :param url: 用户输入的地址
-    :param st: streamlit对象st
     :return:
     '''
     #返回的字典
